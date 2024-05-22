@@ -9,4 +9,10 @@ router.post(
   verifyToken,
   commentController.editComment
 );
+router.get("/getComment/:videoId", commentController.getCommentfromAVideo);
+router.get(
+  "/deleteComment/:commentId",
+  verifyToken,
+  commentController.deleteComment
+);
 module.exports = router;

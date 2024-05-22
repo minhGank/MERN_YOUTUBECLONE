@@ -1,5 +1,6 @@
 const User = require("../models/UserModel");
-
+const Comment = require("../models/CommentModel");
+const Video = require("../models/VideoModel");
 exports.update = async (req, res, next) => {
   const userIdFromParams = req.params.id;
   if (req.user.id != userIdFromParams) {
@@ -123,12 +124,43 @@ exports.unsubscribe = async (req, res, next) => {
   }
 };
 
-exports.like = async (req, res, next) => {
+exports.likeVideo = async (req, res, next) => {
+  try {
+    const videoId = req.params.videoId;
+    const video = await Video.findById(videoId);
+    if (!video) {
+      return res.json({ status: false, msg: "Video not found" });
+    }
+    const updateVideo = await Video.findByIdAndUpdate(videoId, {
+      ///not fisnish
+    });
+  } catch (error) {}
+};
+exports.unlikeVideo = async (req, res, next) => {
   try {
   } catch (error) {}
 };
-
-exports.dislike = async (req, res, next) => {
+exports.dislikeVideo = async (req, res, next) => {
+  try {
+  } catch (error) {}
+};
+exports.undislikeVideo = async (req, res, next) => {
+  try {
+  } catch (error) {}
+};
+exports.likeComment = async (req, res, next) => {
+  try {
+  } catch (error) {}
+};
+exports.unlikeComment = async (req, res, next) => {
+  try {
+  } catch (error) {}
+};
+exports.dislikeComment = async (req, res, next) => {
+  try {
+  } catch (error) {}
+};
+exports.undislikeComment = async (req, res, next) => {
   try {
   } catch (error) {}
 };

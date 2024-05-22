@@ -148,6 +148,64 @@ exports.getVideofromSubscribeChannel = async (req, res, next) => {
 exports.getTrendVideo = async (req, res, next) => {
   try {
     const trendVideos = await Video.find({ $sort: { views: -1 } });
+    return res.status(200).json({ status: true, trendVideos });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+// exports.getVideoByTags = async (req, res, next) => {
+//   try {
+//   } catch (error) {
+//     console.log(error);
+//   }
+// };
+
+exports.searchVideo = async (req, res, next) => {
+  try {
+    const searchQuery = req.query.search;
+    const searchQueryWordsArray = searchQuery.split(" ");
+    const result1 = await Video.find({
+      title: new RegExp(searchQuery, "i"),
+    }).sort({
+      views: "desc",
+    });
+
+    const result2 = await Promise.all(
+      searchQueryWordsArray.map((eachWord) => {
+        let resultFromEachWordOfQuery = Video.find({
+          title: new RegExp(eachWord, "i"),
+        })
+          .sort({
+            views: "desc",
+          })
+          .limit(20);
+        return resultFromEachWordOfQuery;
+      })
+    );
+    //remove the duplicate video in the 2nd result
+    const result1Id = new Set();
+
+    result1.map((ele) => {
+      return result1Id.add(ele._id);
+    });
+
+    const result2flatAndUnique = result2.flat().filter((ele) => {
+      if (result1Id.has(ele._id)) {
+        return false;
+      } else {
+        return ele;
+      }
+    });
+    //in case there is no query match
+    if (result1.length == 0 && result2flatAndUnique.length == 0) {
+      return res.json({
+        status: true,
+        msg: `There is no video match ${searchQuery}`,
+      });
+    }
+
+    return res.json({ status: true, result1, result2flatAndUnique });
   } catch (error) {
     console.log(error);
   }

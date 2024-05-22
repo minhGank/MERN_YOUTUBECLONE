@@ -15,5 +15,7 @@ router.get(
   videoControllers.getVideo
 );
 router.get("/getTrendVideo", videoControllers.getVideo);
+// router.post("/tags", videoControllers.getVideoByTags);
+router.get("/search", videoControllers.searchVideo);
 
 module.exports = router;

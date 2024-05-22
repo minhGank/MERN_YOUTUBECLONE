@@ -28,6 +28,6 @@ const commentSchema = mongoose.Schema(
   { timestamps: true }
 );
 
-const Comment = new mongoose.model("Comment", videoSchema);
+const Comment = new mongoose.model("Comment", commentSchema);
 
 module.exports = Comment;

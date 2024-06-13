@@ -41,6 +41,18 @@ const userSchema = mongoose.Schema(
         ref: "Video",
       },
     ],
+    likeComment: [
+      {
+        type: mongoose.Types.ObjectId,
+        ref: "Comment",
+      },
+    ],
+    dislikeComment: [
+      {
+        type: mongoose.Types.ObjectId,
+        ref: "Comment",
+      },
+    ],
   },
   {
     timestamps: true,

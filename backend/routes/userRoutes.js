@@ -10,8 +10,22 @@ router.put("/subscribe/:id", verifyToken, userControllers.subscribe);
 router.put("/unsubcribe/:id", verifyToken, userControllers.unsubscribe);
 router.put("/like/:videoId", verifyToken, userControllers.likeVideo);
 router.put("/dislike/:videoId", verifyToken, userControllers.dislikeVideo);
-router.put("/dislike/:videoId", verifyToken, userControllers.undislikeVideo);
-router.put("/dislike/:videoId", verifyToken, userControllers.unlikeVideo);
-router.put("/like/:commentId", verifyToken, userControllers.likeComment);
-router.put("/dislike/:commentId", verifyToken, userControllers.dislikeComment);
+router.put("/undislike/:videoId", verifyToken, userControllers.undislikeVideo);
+router.put("/unlike/:videoId", verifyToken, userControllers.unlikeVideo);
+router.put("/likeComment/:commentId", verifyToken, userControllers.likeComment);
+router.put(
+  "/dislikeComment/:commentId",
+  verifyToken,
+  userControllers.dislikeComment
+);
+router.put(
+  "/undislikeComment/:videoId",
+  verifyToken,
+  userControllers.undislikeComment
+);
+router.put(
+  "/unlikeComment/:videoId",
+  verifyToken,
+  userControllers.unlikeComment
+);
 module.exports = router;

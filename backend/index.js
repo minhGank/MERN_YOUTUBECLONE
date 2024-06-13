@@ -3,7 +3,14 @@ const app = express();
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
+const cors = require("cors");
 dotenv.config();
+app.use(
+  cors({
+    origin: "http://localhost:3000", // Your frontend URL
+    credentials: true, // Allow cookies to be sent
+  })
+);
 const userRoutes = require("./routes/userRoutes");
 const commentRoutes = require("./routes/commentRoutes");
 const videoRoutes = require("./routes/videoRoutes");
@@ -37,6 +44,6 @@ mongoose
     console.log(err);
   });
 
-const server = app.listen(7000, () => {
+app.listen(7000, () => {
   console.log("server connected at port 7000");
 });

@@ -33,7 +33,7 @@ exports.delete = async (req, res, next) => {
     if (!deletedUser) {
       return res.json({ status: false, msg: "User not found" });
     }
-    await findByIdAndDelete(req.user.id);
+    await User.findByIdAndDelete(req.user.id);
     return res.json({ status: true, msg: "User deleted" });
   } catch (error) {
     console.log(error);
@@ -127,23 +127,24 @@ exports.unsubscribe = async (req, res, next) => {
 exports.likeVideo = async (req, res, next) => {
   try {
     const videoId = req.params.videoId;
+    //find video
     const video = await Video.findById(videoId);
+    //in case cant find video
     if (!video) {
       return res.json({ status: false, msg: "Video not found" });
     }
     const user = await User.findById(req.user.id);
 
     //check if user liked this video before to prevent the repeat like action
-    const checkLikeVideo = user.likeVideos;
-    const result1 = checkLikeVideo.find((likeVideo) => likeVideo == video._id);
-    if (result1) {
+
+    if (user.likeVideos.includes(video._id)) {
       return res.json({
         status: false,
         msg: "You already liked this video before",
       });
     }
     //end the case
-
+    //update the user by pushing the new like video to the list
     const updateUser = await User.findByIdAndUpdate(
       req.user.id,
       {
@@ -152,14 +153,12 @@ exports.likeVideo = async (req, res, next) => {
       { new: true }
     );
     //check if User dislike this video before to undislike it
-    const checkDislikeVideo = updateUser.dislikeVideos;
-    const result = checkDislikeVideo.find(
-      (dislikeVid) => dislikeVid == video._id
-    );
-    if (result) {
+
+    if (user.dislikeVideos.includes(video._id)) {
       const finalUpdateUser = await User.findByIdAndUpdate(req.user.id, {
         $pull: { dislikeVideos: video._id },
       });
+      //update the video
       const updateVideo = await Video.findByIdAndUpdate(
         videoId,
         {
@@ -175,7 +174,7 @@ exports.likeVideo = async (req, res, next) => {
       });
     }
     //end of the case
-
+    //in case the video didn't in the dislike list
     const updateVideo = await Video.findByIdAndUpdate(
       videoId,
       {
@@ -306,25 +305,284 @@ exports.unlikeVideo = async (req, res, next) => {
 
 exports.undislikeVideo = async (req, res, next) => {
   try {
-  } catch (error) {}
+    //find video
+    const video = await Video.findById(req.params.videoId);
+    //find user
+    const user = await User.findById(req.user.id);
+    //in case couldn't find the video
+    if (!video) {
+      return res.json({ status: false, msg: "Video doesn't exist" });
+    }
+    //check if user disliked the video
+    const checkUserLikedVideoBefore = user.dislikeVideos.includes(video._id);
+    //incase they didn't like the video before
+    if (!checkUserLikedVideoBefore) {
+      return res.json({
+        status: false,
+        msg: "Undislike fail because you haven't dislike it",
+      });
+    }
+    //in case they already disliked => update user + update video
+    const updateUser = await User.findByIdAndUpdate(
+      req.user.id,
+      {
+        $pull: { dislikeVideos: video._id },
+      },
+      {
+        new: true,
+      }
+    );
+    const updateVideo = await Video.findByIdAndUpdate(
+      video._id,
+      {
+        $inc: { dislike: -1 },
+      },
+      { new: true }
+    );
+    return res
+      .status(200)
+      .json({ status: true, msg: "Video Undisliked", updateVideo, updateUser });
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(500)
+      .json({ msg: "Internal error, please try again later" });
+  }
 };
 
 exports.likeComment = async (req, res, next) => {
   try {
-  } catch (error) {}
+    const commentId = req.params.commentId;
+    //find comment
+    const comment = await Comment.findById(commentId);
+    //incase couldn't find a comment
+    if (!comment) {
+      return res.json({ status: false, msg: "Comment not found" });
+    }
+    //find user
+    const user = await User.findById(req.user.id);
+
+    //check if user liked this comment before to prevent the repeat like action
+    if (user.likeComment.includes(comment._id)) {
+      return res.json({
+        status: false,
+        msg: "You already liked this comment before",
+      });
+    }
+
+    //update user
+
+    const updateUser = await User.findByIdAndUpdate(
+      req.user.id,
+      {
+        $push: { likeComment: comment._id },
+      },
+      { new: true }
+    );
+    //check if User dislike this comment before to undislike it
+
+    if (user.dislikeComment.includes(comment._id)) {
+      const finalUpdateUser = await User.findByIdAndUpdate(req.user.id, {
+        $pull: { dislikeComment: comment._id },
+      });
+      const updateComment = await Comment.findByIdAndUpdate(
+        commentId,
+        {
+          $inc: { like: +1, dislike: -1 },
+        },
+        { new: true }
+      );
+      return res.status(200).json({
+        status: true,
+        msg: "Comment Liked",
+        updateComment,
+        finalUpdateUser,
+      });
+    }
+    //in case user havent dislike the comment before
+
+    const updateComment = await Comment.findByIdAndUpdate(
+      commentId,
+      {
+        $inc: { like: +1 },
+      },
+      { new: true }
+    );
+    return res
+      .status(200)
+      .json({ status: true, msg: "Comment Liked", updateUser, updateComment });
+  } catch (error) {
+    console.log(error);
+  }
 };
 
 exports.unlikeComment = async (req, res, next) => {
   try {
-  } catch (error) {}
+    //find comment
+    const comment = await Comment.findById(req.params.videoId);
+    //find user
+    const user = await User.findById(req.user.id);
+    //in case couldn't find the video
+    if (!comment) {
+      return res.json({ status: false, msg: "Comment doesn't exist" });
+    }
+    //check if user liked the comment
+    const checkUserLikedCommentBefore = user.likeComment.includes(comment._id);
+    //incase they didn't like the comment before
+    if (!checkUserLikedCommentBefore) {
+      return res.json({
+        status: false,
+        msg: "Unlike fail because you haven't like it",
+      });
+    }
+    //in case they already liked => update user + update comment
+    const updateUser = await User.findByIdAndUpdate(
+      req.user.id,
+      {
+        $pull: { likeComment: comment._id },
+      },
+      {
+        new: true,
+      }
+    );
+    const updateComment = await Video.findByIdAndUpdate(
+      comment._id,
+      {
+        $inc: { like: -1 },
+      },
+      { new: true }
+    );
+    return res.status(200).json({
+      status: true,
+      msg: "Comment Unliked",
+      updateComment,
+      updateUser,
+    });
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(500)
+      .json({ msg: "Internal error, please try again later" });
+  }
 };
 
 exports.dislikeComment = async (req, res, next) => {
   try {
-  } catch (error) {}
+    const commentId = req.params.commentId;
+    //find comment
+    const comment = await Comment.findById(commentId);
+    //in case couldn't find a comment
+    if (!comment) {
+      return res.json({ status: false, msg: "Comment not found" });
+    }
+    //find user
+    const user = await User.findById(req.user.id);
+
+    //check if user disliked this comment before to prevent the repeat like action
+    if (user.dislikeComment.includes(comment._id)) {
+      return res.json({
+        status: false,
+        msg: "You already disliked this comment before",
+      });
+    }
+
+    //update user
+
+    const updateUser = await User.findByIdAndUpdate(
+      req.user.id,
+      {
+        $push: { dislikeComment: comment._id },
+      },
+      { new: true }
+    );
+    //check if User dislike this comment before to undislike it
+
+    if (user.likeComment.includes(comment._id)) {
+      const finalUpdateUser = await User.findByIdAndUpdate(req.user.id, {
+        $pull: { likeComment: comment._id },
+      });
+      const updateComment = await Comment.findByIdAndUpdate(
+        commentId,
+        {
+          $inc: { like: -1, dislike: +1 },
+        },
+        { new: true }
+      );
+      return res.status(200).json({
+        status: true,
+        msg: "Comment Disliked",
+        updateComment,
+        finalUpdateUser,
+      });
+    }
+    //in case user havent dislike the comment before
+
+    const updateComment = await Comment.findByIdAndUpdate(
+      commentId,
+      {
+        $inc: { dislike: +1 },
+      },
+      { new: true }
+    );
+    return res.status(200).json({
+      status: true,
+      msg: "Comment Disliked",
+      updateUser,
+      updateComment,
+    });
+  } catch (error) {
+    console.log(error);
+  }
 };
 
 exports.undislikeComment = async (req, res, next) => {
   try {
-  } catch (error) {}
+    //find comment
+    const comment = await Comment.findById(req.params.videoId);
+    //find user
+    const user = await User.findById(req.user.id);
+    //in case couldn't find the video
+    if (!comment) {
+      return res.json({ status: false, msg: "Comment doesn't exist" });
+    }
+    //check if user disliked the comment
+    const checkUserdisLikedCommentBefore = user.dislikeComment.includes(
+      comment._id
+    );
+    //incase they didn't dislike the comment before
+    if (!checkUserdisLikedCommentBefore) {
+      return res.json({
+        status: false,
+        msg: "Undislike fail because you haven't like it",
+      });
+    }
+    //in case they already disliked => update user + update comment
+    const updateUser = await User.findByIdAndUpdate(
+      req.user.id,
+      {
+        $pull: { dislikeComment: comment._id },
+      },
+      {
+        new: true,
+      }
+    );
+    const updateComment = await Video.findByIdAndUpdate(
+      comment._id,
+      {
+        $inc: { like: -1 },
+      },
+      { new: true }
+    );
+    return res.status(200).json({
+      status: true,
+      msg: "Comment Undisliked",
+      updateComment,
+      updateUser,
+    });
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(500)
+      .json({ msg: "Internal error, please try again later" });
+  }
 };

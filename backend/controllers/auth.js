@@ -6,7 +6,7 @@ const jwt = require("jsonwebtoken");
 exports.signup = async (req, res, next) => {
   try {
     const { username, password, email } = req.body;
-    console.log(password, username, email);
+    console.log("new user trying to sign up");
     const hashPassword = await bcrypt.hash(password, 10);
     const newUser = new User({
       username: username,
@@ -14,7 +14,7 @@ exports.signup = async (req, res, next) => {
       email: email,
     });
     await newUser.save();
-    res.status(200).json({ status: true, msg: "User created" });
+    return res.status(200).json({ status: true, msg: "User created" });
   } catch (error) {
     console.log(error);
     next(error);
@@ -23,12 +23,12 @@ exports.signup = async (req, res, next) => {
 
 exports.signin = async (req, res, next) => {
   try {
-    const { username, password } = req.body;
+    const { email, password } = req.body;
     const user = await User.findOne({
-      username: username,
+      email: email,
     });
     if (!user) {
-      return res.json({ status: false, msg: "Username is not found" });
+      return res.json({ status: false, msg: "Email not found" });
     }
     const checkPassword = await bcrypt.compare(password, user.password);
     if (!checkPassword) {
@@ -38,7 +38,7 @@ exports.signin = async (req, res, next) => {
     delete user.password;
     res
       .cookie("access_token", token, {
-        httpOnly: true,
+        // httpOnly: true,
       })
       .status(200)
       .json({ status: true, msg: "Login successed", user: user });
